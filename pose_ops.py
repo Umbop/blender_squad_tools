@@ -97,6 +97,9 @@ def create_third_person_stand(do_gun_pose):
     bones['CON_SpineController'].rotation_quaternion = (0.9709132313728333,0.17857076227664948,-0.15600892901420593,-0.033183854073286057)
     bones['CON_Camera'].location =  (12.3846, 46.6454, 7.3332)
     bones['CON_Camera'].rotation_euler = (0.8527955412864685,-3.0810420513153076,0.39767563343048096)
+
+    bones['CON_Toe_R'].rotation_quaternion = (0.9951668381690979, -0.08053693920373917, -0.05607466772198677, -0.0035397298634052277)
+    bones['CON_Toe_L'].rotation_quaternion = (0.994144082069397, -0.07468082010746002, 0.07776790112257004, 0.007246107328683138)
     
 def create_third_person_crouch(do_gun_pose):
     ob = bpy.context.object
@@ -145,6 +148,8 @@ def create_third_person_crouch(do_gun_pose):
     bones['CON_SpineController'].rotation_quaternion = (0.9027373790740967,0.421050101518631,-0.07113732397556305,-0.05217078700661659)
     bones['CON_Camera'].location =  (22.3022, 52.6204, -30.2414)
     bones['CON_Camera'].rotation_euler = (1.751046061515808,-0.5115243196487427,0.35704338550567627)
+    bones['CON_Toe_R'].rotation_quaternion = (0.933868,0.355544,-0.029554,0.024609)
+    bones['CON_Toe_L'].rotation_quaternion = (0.992907,-0.081792,0.085985,0.007255)
 
 def create_third_person_prone(do_gun_pose):
     ob = bpy.context.object
@@ -195,6 +200,8 @@ def create_third_person_prone(do_gun_pose):
     bones['CON_SpineController'].rotation_quaternion = (0.9886091351509094,-0.14915844798088074,0.011272492818534374,0.016636276617646217)
     bones['CON_Camera'].location =  (29.9971, 110.0772, -112.7282)
     bones['CON_Camera'].rotation_euler = (1.5255683660507202,-0.15121279656887054,0.4953800141811371)
+    bones['CON_Toe_R'].rotation_quaternion = (0.995681881904602, -0.08420107513666153, -0.03840358927845955, -0.007281571161001921)
+    bones['CON_Toe_L'].rotation_quaternion = (0.9908916354179382, -0.09431438893079758, 0.09583016484975815, 0.00743137439712882)
     
     
 def create_rifle_hand_pose():
@@ -302,7 +309,7 @@ class SquadRig_OT_ApplyPose(bpy.types.Operator):
     do_hands : bpy.props.BoolProperty(
         name="Do hand poses.",
         description="Also does sample hand and finger poses. Good for getting started.",
-        default=False
+        default=True
     )
     
     do_gun_pose : bpy.props.BoolProperty(

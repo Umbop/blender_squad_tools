@@ -31,7 +31,7 @@ class SquadRig_OT_MarkForExport(bpy.types.Operator):
             new_track = ob.animation_data.nla_tracks.new()
             new_track.mute = True
             new_strip = new_track.strips.new("beans",0,bpy.data.actions[self.action_to_mark])
-            new_track.name = new_strip.name
+            new_track.name = "BST_ExportTrack_" + new_strip.name
         return {'FINISHED'}
 
 class SquadRig_OT_UnmarkForExport(bpy.types.Operator):

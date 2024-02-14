@@ -18,6 +18,18 @@ class ImportAnimBone:
     rotation_mode: str = "rotation_quaternion"
     #rotate_offset: Vector = (0.0,0.0,0.0)
 
+'''
+
+
+███████ ██    ██ ███    ██  ██████ ████████ ██  ██████  ███    ██ ███████ 
+██      ██    ██ ████   ██ ██         ██    ██ ██    ██ ████   ██ ██      
+█████   ██    ██ ██ ██  ██ ██         ██    ██ ██    ██ ██ ██  ██ ███████ 
+██      ██    ██ ██  ██ ██ ██         ██    ██ ██    ██ ██  ██ ██      ██ 
+██       ██████  ██   ████  ██████    ██    ██  ██████  ██   ████ ███████ 
+                                                                          
+                                                                        
+'''
+
 def getattachedsquadrig():
     ob = bpy.context.object
     
@@ -28,11 +40,18 @@ def getattachedsquadrig():
                     return constraint.target
     return None
 
+def is_squadrig_active():
+    try:
+        if(bpy.context.active_object.get("squadrigtype") == 'character_control_rig'):
+            return True
+    except (AttributeError, KeyError, TypeError):
+        return False
+
 #might be redundant
 def create_export_pose():
 
     #creates a pose thats literally just the rest pose
-    #the reason for doing so is because blender likes to bake the first frame of whatever its exporting right into the bindpose of what its exporting, completely destrying the animations
+    #the reason for doing so is because blender likes to bake the first frame of whatever its exporting right into the bindpose of what its exporting, completely destroying the animations
     #so for example it would bake the first frame of the basepose into the bind pose, causing all the other animations to break because theyre no longer playing on a properly A-posed character
     #this fixes it by making the rest pose the first action, so when it bakes the bone transforms in it just bakes in the rest pose, so kind of like a buffer action
     
@@ -57,7 +76,20 @@ def create_export_pose():
             constraint.keyframe_insert("mute")
     #set the name
     ob.animation_data.action.name = "temp_EXPORTPOSE"
-    
+
+    return ob.animation_data.action
+
+'''
+██ ███    ███ ██████   ██████  ██████  ████████      █████  ███    ██ ██ ███    ███  █████  ████████ ██  ██████  ███    ██ 
+██ ████  ████ ██   ██ ██    ██ ██   ██    ██        ██   ██ ████   ██ ██ ████  ████ ██   ██    ██    ██ ██    ██ ████   ██ 
+██ ██ ████ ██ ██████  ██    ██ ██████     ██        ███████ ██ ██  ██ ██ ██ ████ ██ ███████    ██    ██ ██    ██ ██ ██  ██ 
+██ ██  ██  ██ ██      ██    ██ ██   ██    ██        ██   ██ ██  ██ ██ ██ ██  ██  ██ ██   ██    ██    ██ ██    ██ ██  ██ ██ 
+██ ██      ██ ██       ██████  ██   ██    ██        ██   ██ ██   ████ ██ ██      ██ ██   ██    ██    ██  ██████  ██   ████ 
+'''                                                                                                                        
+                                                                                                                           
+
+
+
 #gets called when you import
 def import_squad_character_animation(self, context, filepath, delete_root_motion, delete_imported_armature):
     start_time = time.time()
@@ -270,6 +302,20 @@ def import_squad_character_animation(self, context, filepath, delete_root_motion
             new_bone.head = (16.0214, 4.7825, 10.1650)
             new_bone.tail = (16.0991, 4.4359, -9.8319)
             new_bone.roll =-9.879457473754883
+
+
+            new_bone = editbones.new("CON_Toe_L")
+            new_bone.head = (21.9982, -7.5605, 0.4333)
+            new_bone.tail = (25.6493, -15.1032, 0.2398)
+            
+            new_bone.parent = editbones["CON_FootController_L"]
+            new_bone.roll = editbones["Bip01_L_Toe0"].roll
+            new_bone = editbones.new("CON_Toe_R")
+            new_bone.head = (-21.9982, -7.6598, 0.4333)
+            new_bone.tail = (-25.6493, -15.2031, 0.3847)
+            new_bone.parent = editbones["CON_FootController_R"]
+            new_bone.roll = editbones["Bip01_R_Toe0"].roll
+
             new_bone = editbones.new("CON_HandPole_R")
             new_bone.head = (-37.1059, 22.7652, 106.1376)
             new_bone.tail = (-41.1467, 45.0740, 91.3062)
@@ -375,6 +421,8 @@ def import_squad_character_animation(self, context, filepath, delete_root_motion
                 ImportAnimBone('CON_Finger2_L','Bip01_L_Finger2'),
                 ImportAnimBone('CON_Finger3_L','Bip01_L_Finger3'),
                 ImportAnimBone('CON_Finger4_L','Bip01_L_Finger4'),
+                ImportAnimBone("CON_Toe_L", "Bip01_L_Toe0"),
+                ImportAnimBone("CON_Toe_R", "Bip01_R_Toe0"),
                 ]
 
             align_bones_2 = [
@@ -503,6 +551,16 @@ def import_squad_animation(self, context, filepath, delete_root_motion, bone_pri
 
     return {'FINISHED'}
 
+
+'''
+███████ ██   ██ ██████   ██████  ██████  ████████      █████  ███    ██ ██ ███    ███  █████  ████████ ██  ██████  ███    ██ 
+██       ██ ██  ██   ██ ██    ██ ██   ██    ██        ██   ██ ████   ██ ██ ████  ████ ██   ██    ██    ██ ██    ██ ████   ██ 
+█████     ███   ██████  ██    ██ ██████     ██        ███████ ██ ██  ██ ██ ██ ████ ██ ███████    ██    ██ ██    ██ ██ ██  ██ 
+██       ██ ██  ██      ██    ██ ██   ██    ██        ██   ██ ██  ██ ██ ██ ██  ██  ██ ██   ██    ██    ██ ██    ██ ██  ██ ██ 
+███████ ██   ██ ██       ██████  ██   ██    ██        ██   ██ ██   ████ ██ ██      ██ ██   ██    ██    ██  ██████  ██   ████ 
+                                                                                                                                                                                                                                                    
+'''
+
 def export_squad_character_animation(self, context, filepath, visual_bake_actions, force_center_object, match_linked_length, force_lock_foot_root, simplify_factor):
     start_time = time.time()
     
@@ -562,21 +620,26 @@ def export_squad_character_animation(self, context, filepath, visual_bake_action
         sca_constraint.use_max_z = True
         sca_constraint.use_transform_limit = True
 
-    #set frame to 0 so we dont accidentally make actions longer when we start keyframing
+    #keep track of pre export values so we can apply them again post export
     old_frame_current = bpy.context.scene.frame_current
-    bpy.context.scene.frame_set(0)
+   
     #reset the head scalar so the head is normal sized
-    old_head_scale = ob.pose.bones["Bip01_Head"].constraints["Limit Scale"].influence
-    ob.pose.bones["Bip01_Head"].constraints["Limit Scale"].influence = 0
+    old_head_scale = ob.pose.bones["CON_Head"].constraints["Limit Scale"].influence
+    ob.pose.bones["CON_Head"].constraints["Limit Scale"].influence = 0
     #remember the current action so we can change back to it
     old_action = ob.animation_data.action
     
+    
+
     #iterate through NLA strips and convert each one to the squad nameing convention
     #also key all constraints
     for nlatrack in ob.animation_data.nla_tracks:
-        nlatrack.mute = False
-        ob.animation_data.action = nlatrack.strips[0].action
-            
+        if "BST_ExportTrack" in nlatrack.name:
+            nlatrack.mute = False #make sure we're only exporting tracks marked for export
+        ob.animation_data.action = nlatrack.strips[0].action #set track action as active so we can mess with it below
+        
+        bpy.context.scene.frame_set(int(nlatrack.strips[0].action.frame_range[0]))
+
         ob.rotation_euler = Euler((0, 0, 1.570796326794896619231), 'XYZ')#make rig face X+
         #ob.keyframe_insert("rotation_euler")
         ob.location = (0,0,0)
@@ -586,18 +649,12 @@ def export_squad_character_animation(self, context, filepath, visual_bake_action
             
         nlatrack.strips[0].frame_start = nlatrack.strips[0].action.frame_range[0]
         nlatrack.strips[0].frame_end = nlatrack.strips[0].action.frame_range[1]
-        #bpy.context.active_object.animation_data.nla_tracks[0].strips[0].frame_end =  bpy.context.active_object.animation_data.nla_tracks[0].strips[0].action.frame_range[1]
         #renaming the bones renames the fcurves
         for bone in bpy.context.object.pose.bones:
-            #bone.name = make_squad_name(bone.name)
-                
             #make sure all constraints are keyed
             for constraint in bone.constraints:
-                #constraint.mute = False
+                constraint.mute = False
                 constraint.keyframe_insert("mute")
-            
-        #for bone in bones:
-        #    bone.name = make_rig_name(bone.name)
     
     #lock footroot
     if force_lock_foot_root:
@@ -613,23 +670,14 @@ def export_squad_character_animation(self, context, filepath, visual_bake_action
         foot_root_constraint.use_limit_y = True
         foot_root_constraint.use_limit_z = True
         foot_root_constraint.use_transform_limit = True
-
-    #make the armature bones themselves are on the squad name
-    #for bone in bones:
-    #        bone.name = make_squad_name(bone.name)
         
     #setup export pose
-    create_export_pose()
+    export_pose = create_export_pose()
     
     #make sure the constaint stays on
     if force_lock_foot_root:
         foot_root_constraint.mute = False
         foot_root_constraint.keyframe_insert("mute")
-
-    #zero out transforms before export
-    #ob.rotation_euler = Euler((0, 0, 0), 'XYZ')
-    #ob.location = (0,0,0)
-    #ob.scale = (0.01,0.01,0.01)
     
     #do the export
     bpy.ops.export_scene.fbx(
@@ -642,30 +690,18 @@ def export_squad_character_animation(self, context, filepath, visual_bake_action
     secondary_bone_axis= 'Z',
     bake_anim_simplify_factor=simplify_factor
     )
+    #revert all temporary changes made at the start
 
-    #for bone in bones:
-    #    bone.name = make_rig_name(bone.name)
-    
-    #iterate through all the tracks again and change them back into the rig names
     for nlatrack in ob.animation_data.nla_tracks:
         nlatrack.mute = True
         ob.animation_data.action = nlatrack.strips[0].action
-            
-        #for bone in bones:
-        #    bone.name = make_rig_name(bone.name)
-        #for bone in bones:
-        #    bone.name = make_squad_name(bone.name)
-            
-    #make sure rig ends on rig names
-    #for bone in bones:
-    #    bone.name = make_rig_name(bone.name)
-        
+
     #remove exportpose
-    bpy.data.actions.remove(bpy.data.actions["temp_EXPORTPOSE"])
+    bpy.data.actions.remove(export_pose)
         
-    #revert all temporary changes made at the start
     ob.animation_data.action = old_action
-    ob.pose.bones["Bip01_Head"].constraints["Limit Scale"].influence = old_head_scale
+    ob.pose.bones["CON_Head"].constraints["Limit Scale"].influence = old_head_scale
+    ob.pose.bones["CON_Head"].constraints["Limit Scale"].mute = False
     bpy.context.scene.frame_set(old_frame_current)
 
     if object_named_root is not None:
@@ -682,7 +718,6 @@ def export_squad_character_animation(self, context, filepath, visual_bake_action
         ob.constraints.remove(sca_constraint)
 
     end_time = time.time()
-    #print("imported in: " + str(end_time - start_time) + " seconds")
     self.report({'INFO'}, "Exported in: " + str(end_time - start_time) + " seconds.")
 
     return {'FINISHED'}
@@ -699,22 +734,23 @@ def export_weapon_animation(self, context, filepath, visual_bake_actions, force_
             object.select_set(False)
     ob.select_set(True)
 
-    if object_export_name is not "":
-        object_named_weaponroot = None
+    #temp rename
+    if object_export_name != "":
+        object_named_root = None
         ob_old_name = ob.name
         for object in bpy.data.objects:
             if object.name == object_export_name:
-                object.name = object_export_name + "_temp_new_name"
+                object.name = object.name + "_temp_rename_for_export"
                 object_named_root = object
         ob.name = object_export_name
 
     
     
-    #set frame to 0 so we dont accidentally make actions longer when we start keyframing
-    old_frame_current = bpy.context.scene.frame_current
-    bpy.context.scene.frame_set(0)
-    #remember the current action so we can change back to it
-    old_action = ob.animation_data.action
+    
+    old_frame_current = bpy.context.scene.frame_current #remember what frame we're on so we can set it back to that after the export
+    bpy.context.scene.frame_set(0) #set frame to 0 so we dont accidentally make actions longer when we start keyframing
+    
+    old_action = ob.animation_data.action #remember the current action so we can change back to it
     
     baked_action_names = []
     if visual_bake_actions:#visual bake actions to their linked actions
@@ -727,8 +763,8 @@ def export_weapon_animation(self, context, filepath, visual_bake_actions, force_
 
                 #start_frame = nlatrack.strips[0].action.frame_range[0]
                 #end_frame = nlatrack.strips[0].action.frame_range[1]
-                start_frame = linked_action.frame_range[0]
-                end_frame = linked_action.frame_range[1]
+                start_frame = int(linked_action.frame_range[0])
+                end_frame = int(linked_action.frame_range[1])
 
                 nlatrack.strips[0].action_frame_start = start_frame
                 nlatrack.strips[0].action_frame_end = end_frame
@@ -849,6 +885,7 @@ def export_weapon_animation(self, context, filepath, visual_bake_actions, force_
         for strip in nlatrack.strips:
             if strip.action.name in baked_action_names:#revert actions in the export list off of the baked ones and back to the normal ones
                 strip.action = bpy.data.actions[strip.action.name.replace("_baked_for_export","")]
+                
     #delete baked actions
     for action_name in baked_action_names:
         bpy.data.actions.remove(bpy.data.actions[action_name])
@@ -865,8 +902,8 @@ def export_weapon_animation(self, context, filepath, visual_bake_actions, force_
 
 
     if object_export_name is not None:
-        if object_named_weaponroot is not None:
-            object_named_weaponroot.name = object_export_name
+        if object_named_root is not None:
+            object_named_root.name = object_export_name
         ob.name = ob_old_name
 
     if force_center_object:
@@ -877,15 +914,25 @@ def export_weapon_animation(self, context, filepath, visual_bake_actions, force_
     end_time = time.time()
     self.report({'INFO'}, "Exported in: " + str(end_time - start_time) + " seconds.")
     return {'FINISHED'}
+'''
 
-def import_squad_model(self, context, filepath, delete_import_empty, bone_primary_axis, bone_secondary_axis):
+
+██ ███    ███ ██████   ██████  ██████  ████████     ███    ███  ██████  ██████  ███████ ██      
+██ ████  ████ ██   ██ ██    ██ ██   ██    ██        ████  ████ ██    ██ ██   ██ ██      ██      
+██ ██ ████ ██ ██████  ██    ██ ██████     ██        ██ ████ ██ ██    ██ ██   ██ █████   ██      
+██ ██  ██  ██ ██      ██    ██ ██   ██    ██        ██  ██  ██ ██    ██ ██   ██ ██      ██      
+██ ██      ██ ██       ██████  ██   ██    ██        ██      ██  ██████  ██████  ███████ ███████ 
+                                                                                                
+                                                                                            
+'''
+def import_squad_model(self, context, filepath, delete_import_empty, bone_primary_axis, bone_secondary_axis, delete_lods, min_bone_length):
     start_time = time.time()
 
     bpy.ops.import_scene.fbx(
     filepath = filepath,
     primary_bone_axis = bone_primary_axis,
     secondary_bone_axis= bone_secondary_axis,
-    ignore_leaf_bones = True
+    ignore_leaf_bones = False
     )
 
     if delete_import_empty:
@@ -898,10 +945,27 @@ def import_squad_model(self, context, filepath, delete_import_empty, bone_primar
 
                     bpy.data.objects.remove(object, do_unlink=True)
 
+    if delete_lods:
+        for object in bpy.context.selected_objects:
+            if 'LOD' in object.name and 'LOD0' not in object.name:
+                bpy.data.objects.remove(object, do_unlink=True)
+            elif 'LodGroup' in object.name and object.type == "EMPTY":
+                bpy.data.objects.remove(object, do_unlink=True)
+
+    if min_bone_length > 0:
+        for object in bpy.context.selected_objects:
+            if object.type == "ARMATURE":
+                bpy.ops.object.mode_set(mode='EDIT', toggle=False)
+                for bone in object.data.edit_bones:
+                    bone.length = max(bone.length, min_bone_length)
+                bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
+        
+
     end_time = time.time()
     self.report({'INFO'}, "Exported in: " + str(end_time - start_time) + " seconds.")
 
     return {'FINISHED'}
+
 
 def export_squad_model(self, context, filepath, object_export_name, use_tangent_space, bone_primary_axis, bone_secondary_axis, force_center_object):
     start_time = time.time()
@@ -913,9 +977,9 @@ def export_squad_model(self, context, filepath, object_export_name, use_tangent_
             break
         if root_ob.parent in bpy.context.selected_objects:
             root_ob = root_ob.parent
-
+    ob = root_ob
     #do the temporary naming
-    if object_export_name is not "":
+    if object_export_name != "":
         ob = root_ob
         object_named_root = None
         ob_old_name = ob.name
@@ -986,16 +1050,78 @@ def export_squad_model(self, context, filepath, object_export_name, use_tangent_
         ob.constraints.remove(sca_constraint)
 
     #undo the temporary naming
-    if object_export_name is not "":
-        if object_named_root is not None:
-            object_named_root.name = object_export_name
+    if object_export_name != "":
         ob.name = ob_old_name
+        if object_named_root != None:
+            object_named_root.name = object_export_name
+        
 
     #print the operating time
     end_time = time.time()
     self.report({'INFO'}, "Exported in: " + str(end_time - start_time) + " seconds.")
     return {'FINISHED'}
 
+
+'''
+ ██████  ██████  ███████ ██████   █████  ████████  ██████  ██████  ███████ 
+██    ██ ██   ██ ██      ██   ██ ██   ██    ██    ██    ██ ██   ██ ██      
+██    ██ ██████  █████   ██████  ███████    ██    ██    ██ ██████  ███████ 
+██    ██ ██      ██      ██   ██ ██   ██    ██    ██    ██ ██   ██      ██ 
+ ██████  ██      ███████ ██   ██ ██   ██    ██     ██████  ██   ██ ███████ 
+                                                                                                                
+'''
+class Squadrig_OT_Export_Character_Animation(Operator, ExportHelper):
+    """Export Squad Character Animation"""
+    bl_idname = "squadrig.export_squad_character_animation"
+    bl_label = "Export Squad Character Animation"
+    
+    # ExportHelper mixin class uses this
+    filename_ext = ".fbx"
+
+    filter_glob: StringProperty(
+        default="*.fbx",
+        options={'HIDDEN'},
+        maxlen=255,  # Max internal buffer length, longer would be clamped.
+    ) # type: ignore
+
+    visual_bake_actions: BoolProperty(
+        name="Pre-Bake Actions",
+        description="Bake the actions before export so any constrained movement from the opposing rig baked. Currently only works on weapon animation exports.",
+        default=False,
+    ) # type: ignore
+
+    force_center_object: BoolProperty(
+        name="Force center object.",
+        description="Forces the object to the center of the world, effectively removing any object root motion for the export. Leave on unless you're doing cinematics.",
+        default=True,
+    ) # type: ignore
+    
+    match_linked_length: BoolProperty(
+        name="Match action length to linked.",
+        description="Matches the length of each action to the linked actions so that they sync up correctly in-game. Currently only works on weapon animation exports.",
+        default=True,
+    ) # type: ignore
+    force_lock_foot_root: BoolProperty(
+        name="Lock Foot Root bone",
+        description="Locks the foot root bone in place as an extra safety measure against the infamous third person spaghetti legs.",
+        default=True,
+    ) # type: ignore
+    simplify_factor: FloatProperty(
+        name="Simplify Factor",
+        description="Factor to simplify the keyframes to.",
+        default=0,
+        max = 10,
+        min = 0
+    )
+
+    @classmethod
+    def poll(cls, context):
+        if context.active_object != None:
+            if context.active_object.animation_data != None:
+                return len(context.active_object.animation_data.nla_tracks) != 0
+
+    def execute(self, context):
+        return export_squad_character_animation(self, context, self.filepath, self.visual_bake_actions,self.force_center_object, self.match_linked_length, self.force_lock_foot_root, self.simplify_factor)
 
 class Squadrig_OT_Export_Animation(Operator, ExportHelper):
     """Export Squad Animation"""
@@ -1020,7 +1146,7 @@ class Squadrig_OT_Export_Animation(Operator, ExportHelper):
             ('CHARACTER', "Character Animation", "Animation is for Squad character rig."),
             ('WEAPON', "Weapon Animation", "Animation is for a Squad item."),
         ),
-        default='CHARACTER',
+        default='WEAPON',
     )
     object_export_name: StringProperty(
         name="Object export name",
@@ -1038,7 +1164,6 @@ class Squadrig_OT_Export_Animation(Operator, ExportHelper):
         description="Forces the object to the center of the world, effectively removing any object root motion for the export. Leave on unless you're doing cinematics.",
         default=True,
     )
-    
     match_linked_length: BoolProperty(
         name="Match action length to linked.",
         description="Matches the length of each action to the linked actions so that they sync up correctly in-game. Currently only works on weapon animation exports.",
@@ -1075,15 +1200,15 @@ class Squadrig_OT_Export_Animation(Operator, ExportHelper):
     ("-Z", "-Z Axis", "", 6),
     ]
 
-    bone_primary_axis : bpy.props.EnumProperty(items=bone_primary_axis_items, name = "Primary Bone Axis", description="Forward facing axis for bones.", default = "Y")
+    bone_primary_axis : bpy.props.EnumProperty(items=bone_primary_axis_items, name = "Primary Bone Axis", description="Forward facing axis for bones.", default = "X")
 
-    bone_secondary_axis : bpy.props.EnumProperty(items=bone_secondary_axis_items, name = "Secondary Bone Axis", description="Right facing axis for bones", default = "X")
+    bone_secondary_axis : bpy.props.EnumProperty(items=bone_secondary_axis_items, name = "Secondary Bone Axis", description="Right facing axis for bones", default = "-Y")
 
     @classmethod
     def poll(cls, context):
-        if context.active_object is not None:
-            if context.active_object.animation_data is not None:
-                return len(context.active_object.animation_data.nla_tracks) is not 0
+        if context.active_object != None:
+            if context.active_object.animation_data != None:
+                return len(context.active_object.animation_data.nla_tracks) != 0
 
     def execute(self, context):
         if(self.animation_type == "CHARACTER"):
@@ -1108,7 +1233,7 @@ class Squadrig_OT_Import_Animation(bpy.types.Operator, ImportHelper):
     is_character_animation: BoolProperty(
         name="Animation is character animation",
         description="Handle imported animation as character animation.",
-        default=False,
+        default=is_squadrig_active(),
     )
     delete_imported_armature: BoolProperty(
         name="Delete Imported Armature",
@@ -1140,15 +1265,44 @@ class Squadrig_OT_Import_Animation(bpy.types.Operator, ImportHelper):
     ("-Z", "-Z Axis", "", 6),
     ]
     
-    bone_primary_axis : bpy.props.EnumProperty(items=bone_primary_axis_items, name = "Primary Bone Axis", description="Forward facing axis for bones.", default = "Y")
+    bone_primary_axis : bpy.props.EnumProperty(items=bone_primary_axis_items, name = "Primary Bone Axis", description="Forward facing axis for bones.", default = "X")
 
-    bone_secondary_axis : bpy.props.EnumProperty(items=bone_secondary_axis_items, name = "Secondary Bone Axis", description="Right facing axis for bones", default = "X")
+    bone_secondary_axis : bpy.props.EnumProperty(items=bone_secondary_axis_items, name = "Secondary Bone Axis", description="Right facing axis for bones", default = "-Y")
 
     def execute(self, context):
         if self.is_character_animation:
             return import_squad_character_animation(self, context, self.filepath, self.delete_root_motion, self.delete_imported_armature)
         else:
             return import_squad_animation(self, context, self.filepath, self.delete_root_motion, self.bone_primary_axis, self.bone_secondary_axis, self.delete_imported_armature)
+
+class Squadrig_OT_Import_Character_Animation(bpy.types.Operator, ImportHelper):
+    """Import Squad Animation"""
+    bl_idname = "squadrig.import_squad_character_animation"
+    bl_label = "Import Squad Character Animation"
+    
+    # ImportHelper mixin class uses this
+    filename_ext = ".fbx"
+
+    filter_glob: StringProperty(
+        default="*.fbx",
+        options={'HIDDEN'},
+        maxlen=255,  # Max internal buffer length, longer would be clamped.
+    )
+
+    delete_imported_armature: BoolProperty(
+        name="Delete Imported Armature",
+        description="Deletes the armature that gets imported with the animations.",
+        default=True,
+    )
+
+    delete_root_motion: BoolProperty(
+        name="Delete object keyframes.",
+        description="Delete location,scale,rotation keyframes for object transform.",
+        default=False,
+    )
+
+    def execute(self, context):
+        return import_squad_character_animation(self, context, self.filepath, self.delete_root_motion, self.delete_imported_armature)
 
 class Squadrig_OT_Import_Model(bpy.types.Operator, ImportHelper):
 
@@ -1171,6 +1325,18 @@ class Squadrig_OT_Import_Model(bpy.types.Operator, ImportHelper):
         default=True,
     )
 
+    delete_lods: BoolProperty(
+        name="Delete LODs",
+        description="Deletes all the extra Level of Detail (LOD) meshes that you get.",
+        default=True,
+    ) # type: ignore
+
+    min_bone_length: FloatProperty(
+        name="Minimum Bone Length",
+        description="Minimum length for imported bones. Blender likes to make some bones REALLY small on import.",
+        default=10.0,
+    ) # type: ignore
+
     bone_primary_axis_items = [
     ("X", "X Axis", "", 1),
     ("Y", "Y Axis", "", 2),
@@ -1188,12 +1354,12 @@ class Squadrig_OT_Import_Model(bpy.types.Operator, ImportHelper):
     ("-Z", "-Z Axis", "", 6),
     ]
     
-    bone_primary_axis : bpy.props.EnumProperty(items=bone_primary_axis_items, name = "Primary Bone Axis", description="Forward facing axis for bones.", default = "Y")
+    bone_primary_axis : bpy.props.EnumProperty(items=bone_primary_axis_items, name = "Primary Bone Axis", description="Forward facing axis for bones.", default = "X")
 
-    bone_secondary_axis : bpy.props.EnumProperty(items=bone_secondary_axis_items, name = "Secondary Bone Axis", description="Right facing axis for bones", default = "X")
+    bone_secondary_axis : bpy.props.EnumProperty(items=bone_secondary_axis_items, name = "Secondary Bone Axis", description="Right facing axis for bones", default = "-Y")
 
     def execute(self, context):
-        return import_squad_model(self, context, self.filepath, self.delete_import_empty, self.bone_primary_axis, self.bone_secondary_axis)
+        return import_squad_model(self, context, self.filepath, self.delete_import_empty, self.bone_primary_axis, self.bone_secondary_axis, self.delete_lods, self.min_bone_length)
 
 class Squadrig_OT_Export_Model(Operator, ExportHelper):
     """Export Squad Model"""
@@ -1244,9 +1410,9 @@ class Squadrig_OT_Export_Model(Operator, ExportHelper):
     ("-Z", "-Z Axis", "", 6),
     ]
     
-    bone_primary_axis : bpy.props.EnumProperty(items=bone_primary_axis_items, name = "Primary Bone Axis", description="Forward facing axis for bones.", default = "Y")
+    bone_primary_axis : bpy.props.EnumProperty(items=bone_primary_axis_items, name = "Primary Bone Axis", description="Forward facing axis for bones.", default = "X")
 
-    bone_secondary_axis : bpy.props.EnumProperty(items=bone_secondary_axis_items, name = "Secondary Bone Axis", description="Right facing axis for bones", default = "X")
+    bone_secondary_axis : bpy.props.EnumProperty(items=bone_secondary_axis_items, name = "Secondary Bone Axis", description="Right facing axis for bones", default = "-Y")
 
     @classmethod
     def poll(cls, context):

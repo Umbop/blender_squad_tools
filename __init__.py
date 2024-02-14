@@ -15,10 +15,12 @@ bl_info = {
     "name" : "Blender Squad Tools",
     "author" : "Umbop",
     "description" : "Tools to assist with mod development for OWI core.",
-    "blender" : (2, 80, 0),
-    "version" : (0, 8, 0),
-    "location" : "View3D",
-    "warning" : "Feature complete but mostly untested.",
+    "blender" : (2, 90, 0),
+    "version" : (1, 2, 0),
+    "location" : "View3D > Add > Armature and in the properties tab",
+    "warning" : "",
+    "wiki_url": "https://bit.ly/3uWu5DV",
+    "tracker_url": "https://github.com/Umbop/blender_squad_tools/issues",
     "category" : "Animation"
 }
 
@@ -45,8 +47,6 @@ def update_action(self, value):
                 weaponobject = getweapon()
                 if weaponobject != None:
                     weaponobject.animation_data.action = bpy.data.actions[selected_action.SquadLinkedAction]
-            #except (AttributeError, KeyError, TypeError):
-            #    print("umbop screwed up in update_action in the export/import script")
             
             #ob is weapon rig
             if getattachedsquadrig() is not None :
@@ -64,9 +64,12 @@ class SquadRigExportProperties(bpy.types.PropertyGroup):
 
 from . add_rig_ops import Squadrig_OT_Add_Control_Rig
 from . add_rig_ops import Squadrig_OT_Add_Weapon_Rig
+
+from . port_ops import Squadrig_OT_Export_Character_Animation
 from . port_ops import Squadrig_OT_Import_Animation
 from . port_ops import Squadrig_OT_Export_Animation
 from . port_ops import Squadrig_OT_Import_Model
+from . port_ops import Squadrig_OT_Import_Character_Animation
 from . port_ops import Squadrig_OT_Export_Model
 
 from . action_ops import SquadRig_OT_MarkForExport
@@ -88,6 +91,7 @@ from . object_ops import SquadRig_OT_MakeChildOf
 from . object_ops import SquadRig_OT_ChangeCharacterMesh
 from . object_ops import SquadRig_MT_CharacterMeshSelector
 from . object_ops import SquadRig_OT_DetachCharacterSkin
+from . object_ops import SquadRig_OT_CreateRangingObject
 
 from . pose_ops import SquadRig_OT_ApplyPose
 
@@ -101,14 +105,7 @@ from . ui import SquadRig_PT_ExportPanel
 
 from . dev_ops import SquadRig_PT_Dev_Panel
 from . dev_ops import SquadRig_OT_ConvertToB1Droid
-
-
-
-
-
-#classes = (Squadrig_OT_Add_Control_Rig , Dev_PT_Panel, Squadrig_OT_Export_Squad_Animation)
-
-#register, unregister = bpy.utils.register_classes_factory(classes)
+from . dev_ops import SquadRig_OT_FixAction
       
 
 def getweapon():
@@ -144,10 +141,12 @@ def register():
     bpy.types.Action.SquadLinkedAction = bpy.props.StringProperty()
 
     bpy.utils.register_class(SquadRig_OT_ApplyPose)
-
+    
     bpy.utils.register_class(Squadrig_OT_Add_Control_Rig)
     bpy.utils.register_class(Squadrig_OT_Add_Weapon_Rig)
+    bpy.utils.register_class(Squadrig_OT_Export_Character_Animation)
     bpy.utils.register_class(Squadrig_OT_Import_Animation)
+    bpy.utils.register_class(Squadrig_OT_Import_Character_Animation)
     bpy.utils.register_class(Squadrig_OT_Export_Animation)
     bpy.utils.register_class(Squadrig_OT_Import_Model)
     bpy.utils.register_class(Squadrig_OT_Export_Model)
@@ -163,6 +162,7 @@ def register():
     bpy.utils.register_class(SquadRig_OT_LinkAction)
     bpy.utils.register_class(SquadRig_MT_LinkActionMenu)
 
+    
     bpy.utils.register_class(SquadRig_OT_AttachToSquadRig)
     bpy.utils.register_class(SquadRig_OT_MakeCharacterSkin)
     bpy.utils.register_class(SquadRig_OT_RemoveCharacterSkin)
@@ -170,7 +170,7 @@ def register():
     bpy.utils.register_class(SquadRig_OT_MakeChildOf)
     bpy.utils.register_class(SquadRig_OT_ChangeCharacterMesh)
     bpy.utils.register_class(SquadRig_OT_DetachCharacterSkin)
-
+    bpy.utils.register_class(SquadRig_OT_CreateRangingObject)
 
     bpy.utils.register_class(CONTROLS_ACTION_UL_list)
     bpy.utils.register_class(ACTION_UL_list)
@@ -184,6 +184,7 @@ def register():
     bpy.types.VIEW3D_MT_armature_add.append(weapon_rig_menu_func)
 
     bpy.utils.register_class(SquadRig_OT_ConvertToB1Droid)
+    bpy.utils.register_class(SquadRig_OT_FixAction)
     bpy.utils.register_class(SquadRig_PT_Dev_Panel)
 
 
@@ -191,6 +192,7 @@ def register():
 def unregister():
     print("squad rig tools unregister")
     bpy.utils.unregister_class(SquadRig_PT_Dev_Panel)
+    bpy.utils.unregister_class(SquadRig_OT_FixAction)
     bpy.utils.unregister_class(SquadRig_OT_ConvertToB1Droid)
 
     bpy.types.VIEW3D_MT_armature_add.remove(control_rig_menu_func)
@@ -216,6 +218,8 @@ def unregister():
     bpy.utils.unregister_class(SquadRig_OT_AddFakeUser)
     bpy.utils.unregister_class(SquadRig_MT_CharacterMeshSelector)
     
+    bpy.utils.unregister_class(Squadrig_OT_Import_Character_Animation)
+    bpy.utils.unregister_class(Squadrig_OT_Export_Character_Animation)
     bpy.utils.unregister_class(Squadrig_OT_Import_Animation)
     bpy.utils.unregister_class(Squadrig_OT_Export_Animation)
     bpy.utils.unregister_class(Squadrig_OT_Import_Model)
@@ -223,6 +227,7 @@ def unregister():
     bpy.utils.unregister_class(Squadrig_OT_Add_Control_Rig)
     bpy.utils.unregister_class(Squadrig_OT_Add_Weapon_Rig)
     
+    bpy.utils.unregister_class(SquadRig_OT_CreateRangingObject)
     bpy.utils.unregister_class(SquadRig_OT_AttachToSquadRig)
     bpy.utils.unregister_class(SquadRig_OT_MakeCharacterSkin)
     bpy.utils.unregister_class(SquadRig_OT_RemoveCharacterSkin)

@@ -2,6 +2,8 @@ import bpy
 from mathutils import Euler, Vector
 import string
 import random
+import bmesh
+from bpy.props import StringProperty, BoolProperty, IntProperty, FloatProperty
 
 def getsquadrig(self):
     squadrigs = []
@@ -69,6 +71,18 @@ def update_rig_skin(squadrig, rig_skin_root):
 
     return new_skin
 
+def GetDropAt(muzzle_velocity,gravity_scale,distance):
+    gravity = -980
+    unit_scale_diff = 100
+    muzzle_velocity = muzzle_velocity/100
+    gravity = gravity/100
+    
+    speed = muzzle_velocity
+    flight_time = distance/muzzle_velocity
+    gravity = gravity*gravity_scale
+    drop = (0.5*gravity)*(distance/speed)**2
+    
+    return drop
 
 class SquadRig_OT_AttachToSquadRig(bpy.types.Operator):
     """Attaches object to squad rig's weapon bone"""
@@ -314,3 +328,120 @@ class SquadRig_MT_CharacterMeshSelector(bpy.types.Menu):
                 
                 row = layout.row()
                 op = row.operator("squadrig.change_character_object", text = object_visual_name, icon = icon).new_object_name = object.name
+
+
+class SquadRig_OT_CreateRangingObject(bpy.types.Operator):
+    bl_idname = "squadrig.create_ranging_object"
+    bl_label = "Creates object for setting up ranging in optics."
+    bl_options = {"REGISTER","UNDO"}
+    
+    
+
+    max_distance : IntProperty(
+        name="Range",
+        description="Range to draw ranging line out to.",
+        default=1000,
+        soft_max = 2000,
+        soft_min = 0
+    )
+
+    muzzle_velocity : FloatProperty(
+        name="Muzzle Velocity",
+        description="Muzzle velocity of the projectile in cm/s",
+        default=60000.0,
+        soft_max = 100000.0,
+        soft_min = 0.0
+    )
+
+    gravity_scale : FloatProperty(
+        name="Gravity Scale",
+        description="Gravity scalar for projectile.",
+        default=1.0,
+        soft_max = 2.0,
+        soft_min = 0.0
+    )
+
+    ladder_width : FloatProperty(
+        name="Ladder Width",
+        description="Width of the range ladder steps.",
+        default=5.0,
+        soft_max = 20.0,
+        soft_min = 0.0
+    )
+    ladder_step : FloatProperty(
+        name="Ladder Step",
+        description="Distance in meters between ladder steps.",
+        default=100.0,
+        soft_max = 1500.0,
+        soft_min = 0.0
+    )
+    depth : IntProperty(
+        name="Step",
+        description="Distance between vertices in meters.",
+        default= 5,
+        soft_max = 100,
+        soft_min = 0
+    )
+    make_grease_pencil : BoolProperty(
+        name="Make Grease Pencil",
+        description="Convert the generated mesh to a grease pencil object.",
+        default = True
+    )
+
+
+    
+
+
+    def execute(self, context):
+        bm = bmesh.new()
+
+        first_vert = bmesh.ops.create_vert(bm, co=(0,0,0))
+        last_vert = first_vert['vert'][0]
+
+        ranging_distances = range(0, self.max_distance + 1, self.depth)
+        for distance in ranging_distances:
+            if distance != 0:
+                extrude = bmesh.ops.extrude_vert_indiv(bm, verts=[last_vert], use_select_history=False)
+                last_vert = extrude['verts'][0]
+                drop = GetDropAt(self.muzzle_velocity,self.gravity_scale,distance)
+                last_vert.co = [distance,0,drop]
+                
+                if distance % self.ladder_step == 00:
+                    #ladder
+                    first_ladder_vert = bmesh.ops.create_vert(bm, co=(distance,self.ladder_width/2,drop))
+                    ladder_extrude = bmesh.ops.extrude_vert_indiv(bm, verts=[first_ladder_vert['vert'][0]], use_select_history=False)
+                    last_ladder_vert = ladder_extrude['verts'][0]
+                    last_ladder_vert.co = [distance,-self.ladder_width/2,drop]
+        
+
+        # Finish up, write the bmesh into a new mesh
+        me = bpy.data.meshes.new("Ranging_Mesh")
+        bm.to_mesh(me)
+        bm.free()
+        
+        # Add the mesh to the scene
+        obj = bpy.data.objects.new("Ranging_Object", me)
+        bpy.context.collection.objects.link(obj)
+
+        # Select and make active
+        for object in bpy.data.objects:
+            object.select_set(False)
+        bpy.context.view_layer.objects.active = obj
+        obj.select_set(True)
+        obj.location = bpy.context.scene.cursor.location
+        
+        
+        #gpencil stuff
+        if (self.make_grease_pencil == True):
+            bpy.ops.object.convert(target='GPENCIL')
+            
+            obj = bpy.context.active_object
+            obj.name = 'Ranging_Object'
+            obj.use_grease_pencil_lights = False
+            obj.data.stroke_thickness_space = "SCREENSPACE"
+            obj.data.layers[0].line_change = -100
+            
+            obj.material_slots[0].material.name = '_mat'
+            obj.material_slots[0].material.grease_pencil.color = [1,1,1,1]
+
+        return {'FINISHED'}

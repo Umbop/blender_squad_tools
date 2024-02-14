@@ -1,5 +1,68 @@
 import bpy
 
+def FixActionRig5Beta():
+    action = bpy.context.active_object.animation_data.action
+    a_groups = action.groups
+
+    correct_bones = ['Bip01_DEF_Clavicle_L',
+                    'Bip01_Neck',
+                    'Bip01_Head',
+                    'Bip01_DEF_Clavicle_R',
+                    'Bip01_DEF_Finger0_R',
+                    'Bip01_DEF_Finger01_R',
+                    'Bip01_DEF_Finger02_R',
+                    'Bip01_DEF_Finger1_R',
+                    'Bip01_DEF_Finger11_R',
+                    'Bip01_DEF_Finger12_R',
+                    'Bip01_DEF_Finger2_R',
+                    'Bip01_DEF_Finger21_R',
+                    'Bip01_DEF_Finger22_R',
+                    'Bip01_DEF_Finger3_R',
+                    'Bip01_DEF_Finger31_R',
+                    'Bip01_DEF_Finger32_R',
+                    'Bip01_DEF_Finger4_R',
+                    'Bip01_DEF_Finger41_R',
+                    'Bip01_DEF_Finger42_R',
+                    'Bip01_DEF_Clavicle_L',
+                    'Bip01_DEF_Finger0_L',
+                    'Bip01_DEF_Finger01_L',
+                    'Bip01_DEF_Finger02_L',
+                    'Bip01_DEF_Finger1_L',
+                    'Bip01_DEF_Finger11_L',
+                    'Bip01_DEF_Finger12_L',
+                    'Bip01_DEF_Finger2_L',
+                    'Bip01_DEF_Finger21_L',
+                    'Bip01_DEF_Finger22_L',
+                    'Bip01_DEF_Finger3_L',
+                    'Bip01_DEF_Finger31_L',
+                    'Bip01_DEF_Finger32_L',
+                    'Bip01_DEF_Finger4_L',
+                    'Bip01_DEF_Finger41_L',
+                    'Bip01_DEF_Finger42_L',]
+
+    for bone in correct_bones:
+        for curve in a_groups[bone].channels:
+            curve.data_path = curve.data_path.replace('Bip01_','CON_')
+            curve.data_path = curve.data_path.replace('_DEF','')
+
+def FixActionRig3v2():
+    ob = bpy.context.active_object
+    action = ob.animation_data.action
+    a_groups = action.groups
+
+    for curve in a_groups["C_WeaponController"].channels:
+            curve.data_path = curve.data_path.replace('C_WeaponController','CON_WeaponController')
+    
+    euler_bones = ["C_WeaponController"]
+    for bone in euler_bones: #keyframe in keyframes:
+        #bone.keyframe#keyframe euler on all euler bones
+        for curve in a_groups[bone].channels:
+            for point in curve.keyframe_points:
+                bpy.data.scenes['Scene'].frame_set(point.frame)
+                ob.keyframe_insert('pose.bones["CON_WeaponController"].rotation_euler', point.frame)
+
+
+
 class SquadRig_PT_Dev_Panel(bpy.types.Panel):
     bl_idname = "WM_PT_squadrig_dev_panel"
     bl_label = "SQRig Dev Panel"
@@ -9,6 +72,7 @@ class SquadRig_PT_Dev_Panel(bpy.types.Panel):
     bl_region_type = 'WINDOW'
     bl_context = "world"
 
+
     def draw(self,context):
         layout = self.layout
         ob = context.object
@@ -17,6 +81,11 @@ class SquadRig_PT_Dev_Panel(bpy.types.Panel):
 
         col_flow = layout.column_flow(columns=0, align=False)
         col_flow.operator('squadrig.make_b1', text = "Convert to B1 Rig")
+        col_flow.operator('squadrig.fix_action', text = "Fix Action")
+
+        col_flow = layout.column_flow(columns=0, align=False)
+        col_flow.operator('squadrig.create_ranging_object', text = "Add Ranging Object")
+        
 
 class SquadRig_OT_ConvertToB1Droid(bpy.types.Operator):
     """Converts rig for use with B1 Battledroid"""
@@ -198,3 +267,31 @@ class SquadRig_OT_ConvertToB1Droid(bpy.types.Operator):
             bone.bone.layers[0] = False
 
         return {'FINISHED'}
+
+class SquadRig_OT_FixAction(bpy.types.Operator):
+    """Fixes action STILL IN DEVELOPMENT"""
+    bl_idname = "squadrig.fix_action"
+    bl_label = "Fix action"
+    
+    @classmethod
+    def poll(cls, context):
+        return context.active_object
+    
+    def execute(self, context):
+        action = bpy.context.active_object.animation_data.action
+        a_groups = action.groups
+
+        if a_groups['Bip01_DEF_Clavicle_L'] and a_groups['CC_CustomConstraints_itemAttach.R']:
+            FixActionRig5Beta()
+            print("Rig 5 beta found")
+            self.report({'INFO'}, "Rig 5 (beta) found")
+        elif a_groups['C_WeaponAttach.R'] and a_groups['CC_CustomConstraints_rightHandAttach']:
+            print("Rig 3 v2 found")
+            self.report({'INFO'}, "Rig 3 v2 found, can't do anything though")
+            #FixActionRig3v2()
+        else:
+            self.report({'INFO'}, "No idea what rig this action belongs to.")
+
+
+        return {'FINISHED'}
+    
